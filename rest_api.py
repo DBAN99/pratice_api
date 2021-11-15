@@ -1,7 +1,9 @@
 from fastapi import FastAPI
-from sqlalchemy import MetaData, Table, Column, Integer, Sequence, String,VARCHAR,BigInteger
+from pydantic import BaseModel
+from sqlalchemy import MetaData, Table, Column, Integer,VARCHAR,BigInteger
 from sqlalchemy.orm import declarative_base
 from dbconn import engineconn
+from typing import Optional
 
 import uvicorn
 
@@ -13,8 +15,10 @@ session = engine.sessionmaker()
 connect = engine.connection()
 app = FastAPI()
 
+
+
 #---------- CLASS 선언부 ----------
-# Person Class
+# DB Class
 class Person(Base):
 
     __tablename__ = 'person'
@@ -26,7 +30,8 @@ class Person(Base):
 
 
     def __repr__(self):
-        return "<User(person_id='%s', gender_concept_id='%s', race_source_value='%s', ethnicity_source_value='%s', year_of_birth='%s')>" % (
+        return "<User(person_id='%s', gender_concept_id='%s', race_source_value='%s', " \
+               "ethnicity_source_value='%s', year_of_birth='%s')>" % (
             self.person_id,self.gender_concept_id, self.race_source_value, self.ethnicity_source_value, self.year_of_birth)
 
 class Visit(Base):
@@ -35,7 +40,6 @@ class Visit(Base):
     visit_occurrence_id = Column(BigInteger,nullable=False,primary_key=True)
     person_id = Column(BigInteger,nullable=True)
     visit_concept_id = Column(Integer,nullable=True)
-
 
     def __repr__(self):
         return "<User(visit_occurrence_id='%s', person_id='%s', visit_concept_id='%s')>" % (
@@ -51,6 +55,22 @@ class Concept(Base):
     def __repr__(self):
         return "<User(concept_id='%s', concept_name='%s', domain_id='%s')>" % (
             self.concept_id,self.concept_name, self.domain_id)
+# POST Class
+class Gender(BaseModel):
+    gender : str
+
+class Race(BaseModel):
+    color : str
+
+class Ethinicity(BaseModel):
+    nation : str
+
+class Occurrence(BaseModel):
+    visit : str
+
+class Off_limit(BaseModel):
+    offset: int
+    limit: int
 
 # ------------------------ CLASS ---------------------------------
 
@@ -61,42 +81,25 @@ async def person_all():
     return person
 
 #성별
-@app.get('/person/sex/{gender}')
-async def gender(gender : str):
-
-    if gender == 'm':
-        result = session.query(Person.gender_concept_id).filter(Person.gender_concept_id == "8507").count()
-
-    elif gender == 'f':
-        result = session.query(Person.gender_concept_id).filter(Person.gender_concept_id == "8532").count()
+@app.post('/person/sex')
+async def gender(sex : Gender):
+    #8507 male 8532 female
+    result = session.query(Person.gender_concept_id).filter(Person.gender_concept_id == sex.gender).count()
 
     return result
 
 #인종
-@app.get('/person/race/{color}')
-async def race_color(color : str):
-    if color == 'white':
-        result_color = session.query(Person.race_source_value).filter(Person.race_source_value == "white").count()
-
-    elif color == 'asian':
-        result_color = session.query(Person.race_source_value).filter(Person.race_source_value == "asian").count()
-
-    elif color == 'black':
-        result_color = session.query(Person.race_source_value).filter(Person.race_source_value == "black").count()
+@app.post('/person/race')
+async def race_color(race : Race):
+    # white, black, asian
+    result_color = session.query(Person.race_source_value).filter(Person.race_source_value == race.color).count()
 
     return result_color
 
 # 민족
-@app.get('/person/ethinicity/{nation}')
-async def ethinicity_nation(nation : str):
-
-    if nation == 'hispanic':
-        result_nation = session.query(Person.ethnicity_source_value).filter(
-            Person.ethnicity_source_value == "hispanic").count()
-
-    elif nation == 'nonhispanic':
-        result_nation = session.query(Person.ethnicity_source_value).filter(
-            Person.ethnicity_source_value == "nonhispanic").count()
+@app.post('/person/ethinicity')
+async def ethinicity_nation(ethin : Ethinicity):
+    result_nation = session.query(Person.ethnicity_source_value).filter(Person.ethnicity_source_value == ethin.nation).count()
 
     return result_nation
 
@@ -108,73 +111,45 @@ async def death():
     return death_person
 
 # 환자 유형 (입원, 외래, 응급)
-@app.get('/person/occurrence/{occurrence}')
-async def visit_occurrence(occurrence : str):
-
-    if occurrence == 'inpatient':
-        result_occurrence = session.query(Visit.visit_concept_id).filter(Visit.visit_concept_id == "9201").count()
-
-    elif occurrence == 'outpatient':
-        result_occurrence = session.query(Visit.visit_concept_id).filter(Visit.visit_concept_id == "9202").count()
-
-    elif occurrence == 'emergency':
-        result_occurrence = session.query(Visit.visit_concept_id).filter(Visit.visit_concept_id == "9203").count()
+@app.post('/person/visit')
+async def visit_occurrence(occurrence : Occurrence):
+#9201 02 03
+    result_occurrence = session.query(Visit).filter(Visit.visit_concept_id == occurrence.visit).count()
 
     return result_occurrence
 
-@app.get('/person/visitor/{visitor}')
-async def visitor(visitor: str):
+@app.post('/person/visitor/gender')
+async def visitor(sex: Gender):
+    result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id,Person.gender_concept_id == sex.gender).count()
 
-    # 성별 방문자 수
-    if visitor == 'male':
-        result_visitor = session.query(Visit,Person).filter(Visit.person_id == Person.person_id).filter(
-            Person.gender_concept_id == '8507').count()
+    return result_visitor
 
-    elif visitor == 'female':
-        result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id).filter(
-            Person.gender_concept_id == '8532').count()
-
+@app.post('/person/visitor/race')
+async def visitor(race: Race):
     # 인종별
-    elif visitor == 'white':
-        result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id).filter(
-            Person.race_source_value == 'white').count()
+    result_visitor_race = session.query(Visit, Person).filter(Visit.person_id == Person.person_id,Person.race_source_value == race.color).count()
 
-    elif visitor == 'asian':
-        result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id).filter(
-            Person.race_source_value == 'asian').count()
+    return result_visitor_race
 
-    elif visitor == 'balck':
-        result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id).filter(
-            Person.race_source_value == 'balck').count()
-
-    # 민족별
-    elif visitor == 'hispanic':
-        result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id).filter(
-            Person.ethnicity_source_value == 'hispanic').count()
-
-    elif visitor == 'nonhispanic':
-        result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id).filter(
-            Person.ethnicity_source_value == 'nonhispanic').count()
+@app.post('/person/visitor/nation')
+async def visitor(ethin : Ethinicity):
+    result_visitor = session.query(Visit, Person).filter(Visit.person_id == Person.person_id,Person.ethnicity_source_value == ethin.nation).count()
 
     return result_visitor
 
 @app.get('/person/age/{age}')
 async def age_visitor(age: int):
     ten = age+10
-    result = session.query(Visit,Person).filter(Visit.person_id == Person.person_id).filter(age<=Person.year_of_birth).filter(ten>=Person.year_of_birth).count()
+    result = session.query(Visit,Person).filter(Visit.person_id == Person.person_id,age<=Person.year_of_birth,ten>=Person.year_of_birth).count()
 
     return result
 
-@app.get('/concept')
-async def concept():
-    # table = Table('concept', metadata, autoload=True, autoload_with=engine.engine)
-    # death_person = session.query(table)
-    return
+@app.post('/concept/{search}')
+async def concept(search : str, cnt :Off_limit):
+    result_concept = session.query(Concept).filter(Concept.domain_id == search).offset(cnt.offset).limit(cnt.offset).all()
 
-@app.get("/")
-async def main():
-    main = "fastapi 메인페이지 입니다."
-    return main
+    return result_concept
+
 
 
 if __name__ == '__main__':
