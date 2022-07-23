@@ -32,50 +32,74 @@
 1.  GET 127.0.0.1:8000/person/all => 전체 수 호출
 
 
+
+
 2.  POST 127.0.0.1:8000/person/gender => 성별에 따라 호출
       
       body = { "gender":"8507" male 또는 "gender":"8532" female}
+    
+    
     
 3.  POST 127.0.0.1:8000/person/race => 인종에 따라 호출 
       
       body = { "color":"black" 또는 "color":"white" 또는 "color":"asian"}
     
+    
+    
 4.  POST 127.0.0.1:8000/person/ethinicity => 민족에 따라 호출 
       
       body = { "nation":"hispanic" 또는 "nation":"nonhispanic"}
 
+
+
 5.  GET 127.0.0.1:8000/person/death => 사망 수 호출
+
+
 
 
 6.  POST 127.0.0.1:8000/person/visit => 유형에 따라 호출
       
       body = { "visit":"9201" 또는 "visit":"9202" 또는 "visit":"9203"}
     
+    
+    
 7.  POST 127.0.0.1:8000/person/visit/gender => 성별에 따라 방문 수 호출
       
       body = { "gender":"8507" male 또는 "gender":"8532" female}
+      
+      
       
 8.  POST 127.0.0.1:8000/person/visit/race => 인종에 따라 방문 수 호출
       
       body = { "color":"black" 또는 "color":"white" 또는 "color":"asian"}
       
+      
+      
 9.  POST 127.0.0.1:8000/person/visit/nation => 민족에 따라 방문 수 호출
       
       body = { "nation":"hispanic" 또는 "nation":"nonhispanic"}
 
+
+
 10. GET  127.0.0.1:8000/person/age/{age} => 태어난 년도(10년 기준) 따라 방문 수 호출
       
       Ex:) {age} =>1990 => 1990 ~ 2000년 , 1900 => 1900 ~ 1910년
+      
+      
       
 11. POST 127.0.0.1:8000/concept/{search} => concept_id 호출, offset/limit를 이용해 Pagination 구현
       
       Ex:) {search} => Drug, Condition, Visit, Observation
       body = { "offset":"숫자","offset":"숫자"}
       
+      
+      
 12. POST 127.0.0.1:8000/row/{table} => 각 테이블 row 호출, 특정 키워드 검색 기능은 추가 예정
 
       EX:) {table} => Drug, Condition, Visit, Person
       body = { "offset":"숫자","offset":"숫자"}
+
+
 
 
 
