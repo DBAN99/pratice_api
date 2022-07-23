@@ -14,6 +14,7 @@ connect = engine.connection()
 app = FastAPI()
 
 
+
 #---------- CLASS 선언부 ----------
 # DB Class
 class Person(Base):
@@ -103,7 +104,7 @@ class Off_limit(BaseModel):
 @app.get('/person/all')
 async def person_all():
     table = Table('person', metadata, autoload=True, autoload_with=engine.engine)
-    person = session.query(table).count()
+    person = session.query(table).all()
     return person
 
 @app.post('/person/gender')
