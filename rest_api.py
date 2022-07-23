@@ -15,6 +15,7 @@ app = FastAPI()
 
 
 
+
 #---------- CLASS 선언부 ----------
 # DB Class
 class Person(Base):
